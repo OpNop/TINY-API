@@ -1,0 +1,20 @@
+{
+  "name": "opnop/tiny-api",
+  "description": "The [TINY] Guild Wars 2 API system",
+  "type": "project",
+  "authors": [{
+    "name": "Tiny Taimi",
+    "email": "taimi@dlgnetworks.com"
+  }],
+  "repositories": [{
+    "type": "git",
+    "url": "https://github.com/ictinnovations/RestServer"
+  }],
+  "require": {
+    "jacwright/RestServer": "dev-master",
+    "firebase/php-jwt": "^5.2",
+    "gw2treasures/gw2api": "^3.6",
+    "thingengineer/mysqli-database-class": "dev-master",
+    "predis/predis": "^1.1"
+  }
+}
