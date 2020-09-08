@@ -120,7 +120,7 @@ class GuildController
     }
 }
 
-if (interface_exists( 'iConTask' ) )
+if (interface_exists( 'iCronTask' ) )
 {
     class LotteryCron implements iCronTask
     {
