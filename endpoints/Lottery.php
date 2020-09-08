@@ -27,12 +27,23 @@ class LotteryController
     {
         throw new RestException( 501 );
     }
+}
 
-    public function _cronTask()
+if (interface_exists( 'ICronTask' ) )
+{
+    class LotteryCron implements ICronTask
     {
-        //Pull down API
 
-        //Store new entries into the DB
-        
+        public function run( $config, $db, $cache, $gw2api )
+        {
+            $this->_log("==Starting CronTask==");
+            $quag = $gw2api->quaggans()->get('cheer');
+            print_r( $quag );
+        }
+
+        private function _log ($message)
+        {
+            echo __CLASS__. ": {$message}<br />";
+        }
     }
 }
