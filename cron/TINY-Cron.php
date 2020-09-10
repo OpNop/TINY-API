@@ -50,7 +50,7 @@ foreach( $config['guilds'] as $guild ){
                     break;
                 
                 case 'treasury':
-                    //addTreasuryEvent($entry, $guild);
+                    addTreasuryEvent($entry, $guild);
                     break;
                 
                 case 'stash':
@@ -83,7 +83,10 @@ function addRosterEvent($entry, $guild){
 }
 
 function addTreasuryEvent($entry, $guild){
+    global $api;
     
+    $item = $api->items()->get($entry->item_id);
+    $message = "{$entry->user} deposited {$entry->count} {$item->name}";
     
     if( $message != "" ){
         addLogEvent($entry, $message, $guild);
