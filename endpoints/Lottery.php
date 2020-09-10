@@ -13,8 +13,39 @@ class LotteryController
     {
         global $config;
 
+        //Connect to SQL
+        $this->db = new MysqliDb( $config['db']['host'], $config['db']['username'], $config['db']['password'], $config['db']['database'] );
+
         //Create GW2 API client
         $this->api = new \GW2Treasures\GW2Api\GW2Api();
+        
+        //Redis Cache
+        global $cache;
+        $this->cache = $cache;
+    }
+
+    /**
+     * Get the pot for the current weeks lottery
+     * 
+     * @url GET /pot
+     * @noAuth
+     */
+    public function getPot()
+    {
+        $lotteryStart = date( "Y-m-d H:i:s", strtotime( "Last Wednesday" ) );
+        $this->db->where( 'time', $lotteryStart, '>=' );
+        $pot = $this->db->getValue( 'lottery_entries', 'sum(coins)' );
+        if( $pot ){
+            return [
+                'pot'   => $pot,
+                '1st'   => round($pot * 0.4),
+                '2nd'   => round($pot * 0.3),
+                '3rd'   => round($pot * 0.2),
+                'guild' => round($pot * 0.1)
+            ];
+        } else {
+            return (int)0;
+        }
     }
 
     /**
