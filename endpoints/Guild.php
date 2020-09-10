@@ -127,23 +127,14 @@ if (interface_exists( 'ICronTask' ) )
 
         public function run( $config, $db, $cache, $gw2api )
         {
-            $this->_log("==Starting CronTask==");
+            CronTask::Log("==Starting CronTask==");
             foreach( $config['guilds'] as $guild ) {
 
                 //Get last log ID
                 $db->where( 'guild_id', $guild['guild_id'] );
                 $last_id = $db->getValue( 'log', 'max(api_id)' );
-                $this->_log("Last id for {$guild['name']} is {$last_id}");
+                CronTask::Log("Last id for {$guild['name']} is {$last_id}");
             }
-        }
-
-        public function test () {
-
-        }
-
-        private function _log ($message)
-        {
-            echo __CLASS__. ": {$message}<br />";
         }
     }
 }

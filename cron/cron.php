@@ -73,6 +73,18 @@ class CronTask
             return null;
         }
     }
+
+    //Hmm, this feels strange but meh?
+    public static function Log($message)
+    {
+        if( isset( $_GET['output'] ) ){
+            $now = date("Y-m-d H:i:s");
+            $trace = debug_backtrace();
+            if (isset($trace[1])) {
+                echo( "{$now} - <strong>{$trace[1]['class']}::{$trace[1]['function']}:</strong> {$message}<br>" );
+            }
+        }
+    }
 }
 
 interface ICronTask

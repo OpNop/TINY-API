@@ -36,14 +36,11 @@ if (interface_exists( 'ICronTask' ) )
 
         public function run( $config, $db, $cache, $gw2api )
         {
-            $this->_log("==Starting CronTask==");
+            CronTask::Log("==Starting CronTask==");
+            CronTask::Log("==Test Save==");
             $quag = $gw2api->quaggans()->get('cheer');
-            print_r( $quag );
+            CronTask::Log( print_r( $quag, true ) );
         }
 
-        private function _log ($message)
-        {
-            echo __CLASS__. ": {$message}<br />";
-        }
     }
 }
