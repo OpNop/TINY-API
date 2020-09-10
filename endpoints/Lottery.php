@@ -56,7 +56,28 @@ class LotteryController
      */
     public function listEntries( string $account )
     {
-        throw new RestException( 501 );
+        $this->db->where( 'user', $account );
+        $this->db->orderBy( 'time', 'DESC' );
+
+        $result = $this->db->get( 'lottery_entries' );
+        if( $result ){
+            //seperate current lottery entries
+            $current_lottery = array_filter( $result, function( $entry ) {
+                $time = new DateTime( $entry['time'] );
+                $currentLottery = new DateTime( "Last Wednesday" );
+                return $time >= $currentLottery;
+            } );
+            return [
+                'current_lottery'   => $current_lottery,
+                'history'           => $result
+            ];
+        } else {
+            //return empty array
+            return [
+                'current_lottery'   => [],
+                'history'           => []
+            ];
+        }
     }
 }
 
