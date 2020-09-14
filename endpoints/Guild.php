@@ -80,7 +80,13 @@ class GuildController
             header("X-Result-Count: {$this->db->count}");
             header("X-Page-Total: {$this->db->totalPages}");
             header("X-Result-Total: {$this->db->totalCount}");
-            return $log;
+            return [
+                'PageTotal' => $this->db->totalPages,
+                'PageSize' => $limit,
+                'ResultCount' => $this->db->count,
+                'ResultTotal' => (int)$this->db->totalCount,
+                'logs' => $log
+            ];
         } else {
             throw new RestException(400, "Great! Ya blew it!");
         }
