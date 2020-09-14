@@ -49,16 +49,22 @@ class GuildController
         $type = $_GET['type'] ?? null;
         $page = $_GET['page'] ?? 1;
         $limit = $_GET['limit'] ?? 20;
+        $account = $_GET['account'] ?? null;
 
         $valid_types = ['stash', 'rank_change', 'kick', 'joined', 'invited'];
 
         //Add guild filter
-        if (false === is_null($guild)) {
+        if ($guild) {
             $this->db->where('guild_id', $guild);
         }
 
+        //Add account filter
+        if ($account) {
+            $this->db->where('user', $account);
+        }
+
         //Add type filter
-        if (false === is_null($type)) {
+        if ($type) {
             if (in_array($type, $valid_types)) {
                 $this->db->where('type', $type);
             } else {
