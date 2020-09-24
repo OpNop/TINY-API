@@ -30,20 +30,31 @@ class LotteryController
      */
     public function getPot()
     {
-        $lotteryStart = date("Y-m-d H:i:s", strtotime("Last Wednesday"));
+        //check if it is Wednesday
+        if (date('N') == 3) {
+            $lotteryStart = date("Y-m-d H:i:s", strtotime("Today Midnight"));
+        } else {
+            $lotteryStart = date("Y-m-d H:i:s", strtotime("Last Wednesday"));
+        }
         $this->db->where('time', $lotteryStart, '>=');
         $pot = $this->db->getValue('lottery_entries', 'sum(coins)');
 
         if ($pot) {
             return [
                 'pot' => $pot,
-                '1st' => round($pot * 0.4),
-                '2nd' => round($pot * 0.3),
-                '3rd' => round($pot * 0.2),
+                'first' => round($pot * 0.4),
+                'second' => round($pot * 0.3),
+                'third' => round($pot * 0.2),
                 'guild' => round($pot * 0.1),
             ];
         } else {
-            return (int) 0;
+            return [
+                'pot' => 0,
+                'first' => 0,
+                'second' => 0,
+                'third' => 0,
+                'guild' => 0,
+            ];
         }
     }
 
@@ -55,27 +66,40 @@ class LotteryController
      */
     public function listEntries(string $account)
     {
+        $currentLotteryStart = date("Y-m-d H:i:s", strtotime("Last Wednesday"));
+
         $this->db->where('user', $account);
+        $this->db->where('time', $currentLotteryStart, '>=');
         $this->db->orderBy('time', 'DESC');
-        $result = $this->db->get('lottery_entries');
+        $result = $this->db->getValue('lottery_entries', 'sum(coins)');
 
         if ($result) {
+
+            $tickets = floor($result / 10000);
+            if ($tickets > 5) {
+                $tickets = 5;
+            }
+
+            return ['tickets' => $tickets];
+
             //seperate current lottery entries
-            $current_lottery = array_filter($result, function ($entry) {
-                $time = new DateTime($entry['time']);
-                $currentLottery = new DateTime("Last Wednesday");
-                return $time >= $currentLottery;
-            });
-            return [
-                'current_lottery' => $current_lottery,
-                'history' => $result,
-            ];
+            // $current_lottery = array_filter($result, function ($entry) {
+            //     $time = new DateTime($entry['time']);
+            //     $currentLottery = new DateTime("Last Wednesday");
+            //     return $time >= $currentLottery;
+            // });
+            // return [
+            //     'current_lottery' => $current_lottery,
+            //     'history' => $result,
+            // ];
         } else {
             //return empty array
-            return [
-                'current_lottery' => [],
-                'history' => [],
-            ];
+            return ['tickets' => 0];
+
+            // return [
+            //     'current_lottery' => [],
+            //     'history' => [],
+            // ];
         }
     }
 }
