@@ -26,7 +26,8 @@ if ($client->connect_error) {
 $mode = 'debug'; // 'debug' or 'production'
 $server = new \Jacwright\RestServer\RestServer($mode);
 $server->authHandler = new AuthServer();
-$server->refreshCache(); // uncomment momentarily to clear the cache if classes change in production mode
+//$server->refreshCache(); // uncomment momentarily to clear the cache if classes change in production mode
+$server->useCors = true;
 
 //Setup Redis Cache
 //$client = new Predis\Client();
