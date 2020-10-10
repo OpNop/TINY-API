@@ -116,8 +116,10 @@ function addStashEvent($entry, $guild){
         }
     }
 
-    if( $message != "" ){
+    if( false === empty( $message ) ){
         addLogEvent($entry, $message, $guild);
+    } else {
+        error_log(__METHOD__ . "::Unknown opperation: {$entry->operation}");
     }
 }
 
