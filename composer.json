@@ -8,7 +8,7 @@
   }],
   "repositories": [{
     "type": "git",
-    "url": "https://github.com/ictinnovations/RestServer"
+    "url": "https://github.com/OpNop/RestServer"
   }],
   "require": {
     "jacwright/RestServer": "dev-master",
