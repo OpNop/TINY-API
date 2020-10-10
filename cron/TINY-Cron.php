@@ -123,9 +123,10 @@ function addStashEvent($entry, $guild){
 
 function addLogEvent($event, $message, $guild) {
     global $client;
+    $raw = json_encode($event);
     $client->query( "INSERT INTO `log`
-                        (`api_id`, `guild_id`, `date`, `user`, `type`, `message`) 
-                        VALUES ({$event->id}, '{$guild['guild_id']}', STR_TO_DATE('{$event->time}', '%Y-%m-%dT%H:%i:%s.000Z'), '{$event->user}', '{$event->type}', '{$message}') 
+                        (`api_id`, `guild_id`, `date`, `user`, `type`, `message`, `raw`) 
+                        VALUES ({$event->id}, '{$guild['guild_id']}', STR_TO_DATE('{$event->time}', '%Y-%m-%dT%H:%i:%s.000Z'), '{$event->user}', '{$event->type}', '{$message}', '{$raw}') 
                     ");
 }
 //Update Memebrs 
