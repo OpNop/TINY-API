@@ -41,7 +41,7 @@ class LotteryController
 
         if ($pot) {
             return [
-                'pot' => $pot,
+                'pot' => (int)$pot,
                 'first' => round($pot * 0.4),
                 'second' => round($pot * 0.3),
                 'third' => round($pot * 0.2),
