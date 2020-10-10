@@ -299,6 +299,7 @@ if (interface_exists('ICronTask')) {
                         $item = $this->api->items()->get($entry->item_id);
                         $message = "{$entry->user} withdrew {$entry->count} {$item->name}";
                     }
+                    break;
 
                 case 'move':
                     $item = $this->api->items()->get($entry->item_id);
