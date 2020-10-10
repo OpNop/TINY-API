@@ -23,6 +23,21 @@ class LotteryController
     }
 
     /**
+     * Get lottery status
+     *
+     * @url GET /status
+     * @noAuth
+     */
+    public function getSatatus()
+    {
+        if (Date("l") == "Wednesday" && (Date("G") >= 0 && Date("G") < 3)) {
+            return "Lottery in progress";
+        } else {
+            return new DateTime("Next Wednesday 3:00", );
+        }
+    }
+
+    /**
      * Get the pot for the current weeks lottery
      *
      * @url GET /pot
