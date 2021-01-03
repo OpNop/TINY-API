@@ -45,22 +45,15 @@ class LotteryController
      */
     public function getPot()
     {
-        //check if it is Wednesday
-        if (date('N') == 3) {
-            $lotteryStart = date("Y-m-d H:i:s", strtotime("Today Midnight"));
-        } else {
-            $lotteryStart = date("Y-m-d H:i:s", strtotime("Last Wednesday"));
-        }
-        $this->db->where('time', $lotteryStart, '>=');
-        $pot = $this->db->getValue('lottery_entries', 'sum(coins)');
+        $pot = $this->_getLotteryPot();
 
         if ($pot) {
             return [
-                'pot' => (int)$pot,
-                'first' => round($pot * 0.4),
-                'second' => round($pot * 0.3),
-                'third' => round($pot * 0.2),
-                'guild' => round($pot * 0.1),
+                'pot' => (int) $pot,
+                'first' => round($pot * 0.25),
+                'second' => round($pot * 0.25),
+                'third' => round($pot * 0.25),
+                'guild' => round($pot * 0.25),
             ];
         } else {
             return [
@@ -71,6 +64,28 @@ class LotteryController
                 'guild' => 0,
             ];
         }
+    }
+
+    /**
+     * Generate pot image
+     *
+     * @url GET /pot/image
+     * @noAuth
+     */
+
+    public function getImage()
+    {
+        header("Content-type: image/jpeg");
+
+        $pot = round(($this->_getLotteryPot() * 0.25)/10000);
+        $im = imagecreatefromjpeg("public/images/gold.jpg");
+        $orange = imagecolorallocate($im, 210, 200, 60);
+
+        imagettftext($im, 72, 0, 50, 100, $orange, "public/fonts/gw2chat.ttf", $pot);
+        imagettftext($im, 24, 0, 50, 134, $orange, "public/fonts/gw2chat.ttf", "Gold Each");
+        
+        imagejpeg($im);
+        imagedestroy($im);
     }
 
     /**
@@ -91,8 +106,8 @@ class LotteryController
         if ($result) {
 
             $tickets = floor($result / 10000);
-            if ($tickets > 5) {
-                $tickets = 5;
+            if ($tickets > 10) {
+                $tickets = 10;
             }
 
             return ['tickets' => $tickets];
@@ -116,6 +131,18 @@ class LotteryController
             //     'history' => [],
             // ];
         }
+    }
+
+    private function _getLotteryPot()
+    {
+        //check if it is Wednesday
+        if (date('N') == 3) {
+            $lotteryStart = date("Y-m-d H:i:s", strtotime("Today Midnight"));
+        } else {
+            $lotteryStart = date("Y-m-d H:i:s", strtotime("Last Wednesday"));
+        }
+        $this->db->where('time', $lotteryStart, '>=');
+        return $this->db->getValue('lottery_entries', 'sum(coins)');
     }
 }
 
