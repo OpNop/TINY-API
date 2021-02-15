@@ -2,7 +2,7 @@
 spl_autoload_register(); // don't load our classes unless we use them
 
 //API Key to be used for guild tasks
-define("API_KEY", "2744A09B-A3E7-FA4C-B8F2-0615439E41AABE306789-C698-4521-B403-44DEF9D1A25E");
+define("API_KEY", "59766592-73DB-2341-8DF4-4CE068F17012E880837A-C8FA-4DCF-9D9D-DB52D2D8F67E");
 
 date_default_timezone_set('UTC');
 
