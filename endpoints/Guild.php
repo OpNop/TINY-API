@@ -75,7 +75,7 @@ class GuildController
         $this->db->pageLimit = $limit;
         $this->db->orderBy('date', 'Desc');
         $log = $this->db->arraybuilder()->withTotalCount()->paginate('log', $page);
-        if ($log) {
+        if ($this->db->getLastErrno() === 0) {
             header("X-Page-Size: {$limit}");
             header("X-Result-Count: {$this->db->count}");
             header("X-Page-Total: {$this->db->totalPages}");
@@ -88,6 +88,7 @@ class GuildController
                 'logs' => $log
             ];
         } else {
+            //return $this->db->getLastQuery();
             throw new RestException(400, "Great! Ya blew it!");
         }
 
