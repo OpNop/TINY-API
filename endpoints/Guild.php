@@ -84,13 +84,81 @@ class GuildController
                 'PageTotal' => $this->db->totalPages,
                 'PageSize' => $limit,
                 'ResultCount' => $this->db->count,
-                'ResultTotal' => (int)$this->db->totalCount,
-                'logs' => $log
+                'ResultTotal' => (int) $this->db->totalCount,
+                'logs' => $log,
             ];
         } else {
             //return $this->db->getLastQuery();
             throw new RestException(400, "Great! Ya blew it!");
         }
+
+    }
+
+    /**
+     * Sync guild members
+     *
+     * @url GET /syncMembers
+     * @noAuth
+     */
+    public function syncMembers()
+    {
+        if (!isset($_GET['pass']) || $_GET['pass'] != "ThisisthePassWord2") {
+            return "No!";
+        }
+        global $config;
+
+        $log = [];
+
+        foreach ($config['guilds'] as $guild) {
+
+            //load the guild_id
+            $this->db->where("guid", $guild['guild_id']);
+            $guild_id = $this->db->getValue('guilds', 'id');
+
+            if (!$guild_id) {
+                return $this->db->getLastError();
+            }
+
+            $members = $this->members($guild['guild_id']);
+
+            foreach ($members as $member) {
+                unset($id);
+                $log[] = "Setting up {$member->name}";
+
+                $data = [
+                    'account' => $member->name,
+                ];
+                $this->db->onDuplicate(['account'], 'id');
+                $this->db->insert('members', $data);
+                // This is broken, returns id as 1 on duplicate
+                // $id = $this->db->insert('members', $data);
+                $log[] = $this->db->getLastQuery();
+
+                // Doing it this way works, but "should be" duplicated
+                // from $db->insert, report bug?
+                $id = $this->db->rawQueryValue("SELECT LAST_INSERT_ID() limit 1");
+                $log[] = $this->db->getLastQuery();
+
+                if (!$id) {
+                    return $this->db->getLastError();
+                }
+
+                $member_guild = [
+                    'account_id' => $id,
+                    'guild_id' => $guild_id,
+                    'guild_rank' => $member->rank,
+                    'date_joined' => $this->db->func('STR_TO_DATE(?, ?)', [$member->joined, '%Y-%m-%dT%H:%i:%s.000Z']),
+                ];
+
+                $mgid = $this->db->insert('members_guild', $member_guild);
+                $log[] = $this->db->getLastQuery();
+
+                if (!$mgid) {
+                    return $this->db->getLastError();
+                }
+            }
+        }
+        return $log;
 
     }
 
