@@ -9,6 +9,13 @@ class AuthController
 
     private $cache;
 
+    private $rank = [
+        0 => 'Member',
+        1 => 'Tiny Officer',
+        2 => 'Tiny General',
+        3 => 'Tiny Leader',
+    ];
+
     public function __construct()
     {
         $this->cache = new Predis\Client();
@@ -26,21 +33,49 @@ class AuthController
             throw new RestException(400);
         }
 
-        if ($data->token == "tinytiny-t1ny-t1ny-t1ny-tinytinytiny") {
+        global $api;
+        global $db;
 
-            $payload = $this->make_payload(["name" => "Tiny Tester", "rank" => "Tiny Leader"]);
-            $refresh = $this->make_guid();
-
-            $this->cache->setex("refresh_tokens:{$refresh}", 86400, serialize($payload));
-
-            setcookie("refresh_token", $refresh, 0, "/", "api.tinyarmy.org", true, true);
-            return [
-                'token' => JWT::encode($payload, $this->key),
-                'user' => 'Dev User'
-            ];
-        } else {
+        // Try and fetch the account
+        try {
+            $api_account = $api->account($data->token)->get();
+        } catch (AuthenticationException $exception) {
             throw new RestException(401);
+            die();
         }
+
+        // Check if the account has access
+        $db->where('account', $api_account->name);
+        $user = $db->withTotalCount()->getOne('members');
+
+        // No Account found
+        if ($db->totalCount == 0) {
+            throw new RestException(401);
+            die();
+        }
+
+        // No Access
+        if ($user['access'] == 0) {
+            throw new RestException(401);
+            die();
+        }
+
+        $payload = $this->make_payload(
+            [
+                "name" => substr($user['account'], -5),
+                "rank" => $this->rank[$user['access']],
+            ]
+        );
+        $refresh = $this->make_guid();
+
+        $this->cache->setex("refresh_tokens:{$refresh}", 86400, serialize($payload));
+
+        setcookie("refresh_token", $refresh, 0, "/", "api.tinyarmy.org", true, true);
+        return [
+            'token' => JWT::encode($payload, $this->key),
+            'user' => substr($user['account'], 0, -5),
+        ];
+
     }
 
     /**
