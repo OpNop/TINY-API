@@ -18,10 +18,14 @@ foreach (glob("endpoints/*.php") as $endpoint) {
 require_once "config.php";
 
 //Connect to MySql
-$client = new mysqli($config['db']['host'], $config['db']['username'], $config['db']['password'], $config['db']['database']);
-if ($client->connect_error) {
-    die("Connection failed: " . $client->connect_error);
+try {
+    $db = new MysqliDb($config['db']['host'], $config['db']['username'], $config['db']['password'], $config['db']['database']);
+} catch (\Exception $e) {
+    die($e->getMessage());
 }
+
+//Create GW2 API client
+$api = new \GW2Treasures\GW2Api\GW2Api();
 
 $mode = 'debug'; // 'debug' or 'production'
 $server = new \Jacwright\RestServer\RestServer($mode);
