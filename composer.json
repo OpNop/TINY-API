@@ -11,10 +11,10 @@
     "url": "https://github.com/OpNop/RestServer"
   }],
   "require": {
-    "jacwright/RestServer": "dev-master",
     "firebase/php-jwt": "^5.2",
     "gw2treasures/gw2api": "^3.6",
     "thingengineer/mysqli-database-class": "dev-master",
-    "predis/predis": "^1.1"
+    "predis/predis": "^1.1",
+    "jacwright/restserver": "dev-master"
   }
 }

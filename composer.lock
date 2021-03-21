@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "647630407541eb3b9750a9f9c11d0aec",
+    "content-hash": "3449470cc2167bcac3e0d9ddb40f848d",
     "packages": [
         {
             "name": "firebase/php-jwt",
@@ -298,8 +298,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/ictinnovations/RestServer",
-                "reference": "0a09d5b1537b205d40a42312561367889eb761a4"
+                "url": "https://github.com/OpNop/RestServer",
+                "reference": "4d23b2dd0760ee55dbd58336d92c20317a50ee62"
             },
             "require": {
                 "php": ">=5.3.3"
@@ -332,7 +332,7 @@
                 "rest",
                 "rest-server"
             ],
-            "time": "2020-05-18T12:02:54+00:00"
+            "time": "2020-09-17T22:10:51+00:00"
         },
         {
             "name": "paragonie/random_compat",
@@ -848,8 +848,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "jacwright/restserver": 20,
-        "thingengineer/mysqli-database-class": 20
+        "thingengineer/mysqli-database-class": 20,
+        "jacwright/restserver": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
