@@ -28,6 +28,25 @@ class MemberController
     }
 
     /**
+     * Get Ban List
+     * 
+     * @url GET /banned
+     * #noAuth
+     */
+    public function banList()
+    {
+        global $db;
+
+        $db->orderBy('account', 'ASC');
+        $list = $db->get('ban_list');
+        if($list){
+            return $list;
+        } else {
+            return [];
+        }
+    }
+
+    /**
      * Get account information
      * 
      * @url GET /$account
