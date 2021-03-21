@@ -57,8 +57,10 @@ class MemberController
             return [];
         }
 
-        $this->db->where("account", "{$account}%", 'like');
-        return $this->db->get('members');
+        global $db;
+        
+        $db->where("account", "{$account}%", 'like');
+        return $db->get('members');
 
     }
 
