@@ -157,23 +157,6 @@ class GuildController
     }
 
     /**
-     * Search for member
-     * 
-     * @url GET /members/search
-     */
-    public function memberSearch()
-    {
-        $account = $_GET['account'] ?? '';
-
-        if($account == '')
-            return [];
-
-        $this->db->where("account", "{$account}%", 'like');
-        return $this->db->get('members');
-
-    }
-
-    /**
      * Get guild memebrs
      *
      * @url GET /members
@@ -189,7 +172,7 @@ class GuildController
         $valid_sort_by = ['account', 'guild_rank', 'date_joined'];
 
         //Validate Order By
-        if (!in_array($sort_by, $valid_sort_by)){
+        if (!in_array($sort_by, $valid_sort_by)) {
             throw new RestException(400, "Argument `orderBy` must be one of (" . implode(', ', $valid_sort_by) . ")");
         }
 
@@ -336,11 +319,11 @@ if (interface_exists('ICronTask')) {
          */
         private function parseLogs()
         {
-            
+
             // Fetch last ID's processed for all guilds
             $profile_start = hrtime(true);
             $last_ids = $this->getLastIds();
-            CronTask::Log("getLastIds took: ".(float)(hrtime(true) - $profile_start)/1e+9." seconds to run");
+            CronTask::Log("getLastIds took: " . (float) (hrtime(true) - $profile_start) / 1e+9 . " seconds to run");
 
             foreach ($this->config['guilds'] as $guild) {
 
@@ -351,7 +334,7 @@ if (interface_exists('ICronTask')) {
                 // Fetch the logs from API
                 $profile_start = hrtime(true);
                 $log = $this->api->guild()->logOf($guild['api_key'], $guild['guild_id'])->since($last_id);
-                CronTask::Log("API call took: ".(float)(hrtime(true) - $profile_start)/1e+9." seconds to run");
+                CronTask::Log("API call took: " . (float) (hrtime(true) - $profile_start) / 1e+9 . " seconds to run");
                 // If log is empty, nothing new, move on
                 if (empty($log)) {
                     continue;
@@ -575,7 +558,7 @@ if (interface_exists('ICronTask')) {
 
         /**
          * Fetch and format the last IDs for all guilds
-         * 
+         *
          * @return array
          */
         private function getLastIds(): array
@@ -584,7 +567,7 @@ if (interface_exists('ICronTask')) {
             $last_ids_raw = $this->db->get('log', null, ['max(api_id) as api_id', 'guild_id']);
             $last_ids = [];
 
-            foreach ($last_ids_raw as $data ) {
+            foreach ($last_ids_raw as $data) {
                 $last_ids[$data['guild_id']] = $data['api_id'];
             }
 
