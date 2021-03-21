@@ -32,7 +32,6 @@ class GuildController
      * Test Endpoint
      *
      * @url GET /test
-     * @noAuth
      */
     public function test()
     {
@@ -44,7 +43,6 @@ class GuildController
      *
      * @url GET /logs
      * @url GET /$guild/log
-     * @noAuth
      */
     public function allLogs($guild = null)
     {
@@ -145,7 +143,6 @@ class GuildController
      * Get Members Count
      *
      * @url GET /members/count
-     * @noAuth
      */
     public function membersCount()
     {
@@ -163,7 +160,6 @@ class GuildController
      * Search for member
      * 
      * @url GET /members/search
-     * @noAuth
      */
     public function memberSearch()
     {
@@ -182,7 +178,6 @@ class GuildController
      *
      * @url GET /members
      * @url GET /$guild/members
-     * @noAuth
      */
     public function members($guild = null)
     {
@@ -236,7 +231,6 @@ class GuildController
      * Get guild stats
      *
      * @url GET /stats
-     * @noAuth
      */
     public function guildStats()
     {
@@ -253,7 +247,6 @@ class GuildController
      * Get guild info
      *
      * @url GET /$id
-     * @noAuth
      */
     public function guild($id)
     {

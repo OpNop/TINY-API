@@ -13,7 +13,6 @@ class MemberController
      * Test Endpoint
      *
      * @url GET /test
-     * @noAuth
      */
     public function test()
     {
@@ -31,7 +30,6 @@ class MemberController
      * Get Ban List
      * 
      * @url GET /banned
-     * #noAuth
      */
     public function banList()
     {
@@ -50,7 +48,6 @@ class MemberController
      * Get account information
      * 
      * @url GET /$account
-     * @noAuth
      */
     public function memberInfo($account = null)
     {

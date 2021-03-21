@@ -5,8 +5,6 @@ use \Jacwright\RestServer\RestException;
 
 class AuthController
 {
-    private $key = "e832ea47-75ae-45c3-b5c3-2c4df5babb91";
-
     private $cache;
 
     private $rank = [
@@ -33,8 +31,7 @@ class AuthController
             throw new RestException(400);
         }
 
-        global $api;
-        global $db;
+        global $api, $config, $db;
 
         // Try and fetch the account
         try {
@@ -72,7 +69,7 @@ class AuthController
 
         setcookie("refresh_token", $refresh, 0, "/", "api.tinyarmy.org", true, true);
         return [
-            'token' => JWT::encode($payload, $this->key),
+            'token' => JWT::encode($payload, $config['jwt_key']),
             'user' => substr($user['account'], 0, -5),
         ];
 
@@ -99,7 +96,7 @@ class AuthController
             $this->cache->setex("refresh_tokens:{$refresh}", 86400, serialize($payload));
 
             setcookie("refresh_token", $refresh, 0, "/", "api.tinyarmy.org", true, true);
-            return JWT::encode($payload, $this->key);
+            return JWT::encode($payload, $config['jwt_key']);
         } else {
             throw new RestException(401);
         }
@@ -111,8 +108,8 @@ class AuthController
         $payload = [
             "iss" => "https://api.tinyarmy.org/",
             "iat" => $time,
-            "nbf" => $time + 10,
-            "exp" => $time + 60,
+            "nbf" => $time - 10,
+            "exp" => $time + 86400,
             "data" => $data,
         ];
         return $payload;
