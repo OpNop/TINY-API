@@ -38,6 +38,7 @@ $server->useCors = true;
 
 $server->addClass('AuthController', '/v1/auth');
 $server->addClass('GuildController', '/v1/guild');
+$server->addClass('MemberController', '/v1/members'); 
 $server->addClass('LotteryController', '/v1/lottery');
 
 $server->handle();
