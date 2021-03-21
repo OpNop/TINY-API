@@ -1,9 +1,9 @@
 <?php
 
 //Make sure this is run as a cron or manually by setting ?doing_cron to anything
-if( false === isset( $_GET['doing_cron'] ) ) {
-    die();
-}
+// if( false === isset( $_GET['doing_cron'] ) ) {
+//     die();
+// }
 
 date_default_timezone_set('UTC');
 
@@ -18,9 +18,11 @@ foreach(glob("../endpoints/*.php") as $endpoint){
 //Load settings
 require_once "../config.php";
 
+//Open log file
+$logFile = fopen('log.log', 'a');
+
 class CronTask 
 {
-
     private $db;
 
     private $cache;
@@ -44,6 +46,14 @@ class CronTask
 
         //Setup API
         $this->gw2api = new \GW2Treasures\GW2Api\GW2Api();
+
+        //Check if API is up 
+        try{
+            $this->gw2api->build()->get();
+        } catch (Exception $e) {
+            CronTask::Log("API Error");
+            return false;
+        }
 
         //Find CronTasks
         $this->cronTasks = $this->_findCronTasks();
@@ -77,10 +87,15 @@ class CronTask
     //Hmm, this feels strange but meh?
     public static function Log($message)
     {
-        if( isset( $_GET['output'] ) ){
-            $now = date("Y-m-d H:i:s");
-            $trace = debug_backtrace();
-            if (isset($trace[1])) {
+        $now = date("Y-m-d H:i:s");
+        $trace = debug_backtrace();
+        
+        if (isset($trace[1])) {
+            //Write to log gile
+            global $logFile;
+            fwrite($logFile, "{$now} - {$trace[1]['class']}::{$trace[1]['function']}: {$message}\n");
+
+            if( isset( $_GET['output'] ) ){
                 echo( "{$now} - <strong>{$trace[1]['class']}::{$trace[1]['function']}:</strong> {$message}<br>" );
             }
         }
