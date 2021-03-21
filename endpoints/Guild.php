@@ -10,10 +10,12 @@ class GuildController
 
     private $cache;
     private $db;
+    private $config;
 
     public function __construct()
     {
         global $config;
+        $this->config = $config;
 
         //Connect to SQL
         $this->db = new MysqliDb($config['db']['host'], $config['db']['username'], $config['db']['password'], $config['db']['database']);
@@ -47,8 +49,8 @@ class GuildController
     public function allLogs($guild = null)
     {
         $type = $_GET['type'] ?? null;
-        $page = $_GET['page'] ?? 1;
-        $limit = $_GET['limit'] ?? 20;
+        $page = (int) ($_GET['page'] ?? 1);
+        $limit = (int) ($_GET['limit'] ?? 20);
         $account = $_GET['account'] ?? null;
 
         $valid_types = ['stash', 'rank_change', 'kick', 'joined', 'invited'];
@@ -102,7 +104,7 @@ class GuildController
      */
     public function syncMembers()
     {
-        if (!isset($_GET['pass']) || $_GET['pass'] != "ThisisthePassWord2") {
+        if (!isset($_GET['pass']) || $_GET['pass'] != "ThisisthePassWord235") {
             return "No!";
         }
         global $config;
@@ -111,55 +113,140 @@ class GuildController
 
         foreach ($config['guilds'] as $guild) {
 
-            //load the guild_id
-            $this->db->where("guid", $guild['guild_id']);
-            $guild_id = $this->db->getValue('guilds', 'id');
-
-            if (!$guild_id) {
-                return $this->db->getLastError();
-            }
-
-            $members = $this->members($guild['guild_id']);
+            $members = $this->api->guild()->membersOf(API_KEY, $guild['guild_id'])->get();
 
             foreach ($members as $member) {
-                unset($id);
+
                 $log[] = "Setting up {$member->name}";
 
                 $data = [
                     'account' => $member->name,
                 ];
-                $this->db->onDuplicate(['account'], 'id');
+                $this->db->onDuplicate(['account']);
                 $this->db->insert('members', $data);
-                // This is broken, returns id as 1 on duplicate
-                // $id = $this->db->insert('members', $data);
                 $log[] = $this->db->getLastQuery();
-
-                // Doing it this way works, but "should be" duplicated
-                // from $db->insert, report bug?
-                $id = $this->db->rawQueryValue("SELECT LAST_INSERT_ID() limit 1");
-                $log[] = $this->db->getLastQuery();
-
-                if (!$id) {
-                    return $this->db->getLastError();
-                }
 
                 $member_guild = [
-                    'account_id' => $id,
-                    'guild_id' => $guild_id,
+                    'account' => $member->name,
+                    'guild' => $guild['guild_id'],
                     'guild_rank' => $member->rank,
                     'date_joined' => $this->db->func('STR_TO_DATE(?, ?)', [$member->joined, '%Y-%m-%dT%H:%i:%s.000Z']),
                 ];
 
                 $mgid = $this->db->insert('members_guild', $member_guild);
                 $log[] = $this->db->getLastQuery();
-
-                if (!$mgid) {
-                    return $this->db->getLastError();
-                }
             }
         }
         return $log;
 
+    }
+
+    /**
+     * Get Members Count
+     *
+     * @url GET /members/count
+     * @noAuth
+     */
+    public function membersCount()
+    {
+        $this->db->orderBy('time', 'DESC');
+        $members = $this->db->getValue('guild_stats', 'members', 1);
+        if ($members) {
+            return $members;
+        } else {
+            return 0;
+        }
+
+    }
+
+    /**
+     * Search for member
+     * 
+     * @url GET /members/search
+     * @noAuth
+     */
+    public function memberSearch()
+    {
+        $account = $_GET['account'] ?? '';
+
+        if($account == '')
+            return [];
+
+        $this->db->where("account", "{$account}%", 'like');
+        return $this->db->get('members');
+
+    }
+
+    /**
+     * Get guild memebrs
+     *
+     * @url GET /members
+     * @url GET /$guild/members
+     * @noAuth
+     */
+    public function members($guild = null)
+    {
+        $page = (int) ($_GET['page'] ?? 1);
+        $limit = (int) ($_GET['limit'] ?? 20);
+        $order_by = $_GET['order_by'] ?? 'DESC';
+        $sort_by = $_GET['sort_by'] ?? 'date_joined';
+
+        $valid_sort_by = ['account', 'guild_rank', 'date_joined'];
+
+        //Validate Order By
+        if (!in_array($sort_by, $valid_sort_by)){
+            throw new RestException(400, "Argument `orderBy` must be one of (" . implode(', ', $valid_sort_by) . ")");
+        }
+
+        $this->db->pageLimit = $limit;
+        $this->db->orderBy($sort_by, $order_by);
+
+        //Add guild filter
+        if ($guild) {
+            $this->db->where('guild_guid', $guild);
+        }
+
+        $members = $this->db->arraybuilder()->withTotalCount()->paginate('v_members', $page);
+        if ($this->db->getLastErrno() === 0) {
+            header("X-Result-Count: {$this->db->count}");
+            header("X-Page-Total: {$this->db->totalPages}");
+            header("X-Result-Total: {$this->db->totalCount}");
+            return [
+                'PageTotal' => $this->db->totalPages,
+                'PageSize' => $limit,
+                'ResultCount' => $this->db->count,
+                'ResultTotal' => (int) $this->db->totalCount,
+                'members' => $members,
+            ];
+        } else {
+            //return $this->db->getLastQuery();
+            throw new RestException(400, "Great! Ya blew it!");
+        }
+
+        //Check if cached
+
+        //request new data
+        //$guildMemebers = $this->api->guild()->membersOf(API_KEY, $id)->get();
+
+        //store in cache
+        //$this->cache->set("guild:{$id}:members", $guildMemebers);
+    }
+
+    /**
+     * Get guild stats
+     *
+     * @url GET /stats
+     * @noAuth
+     */
+    public function guildStats()
+    {
+        $this->db->orderBy('time', 'DESC');
+        $stats = $this->db->get('guild_stats', 15);
+        $current = $stats[0];
+        return [
+            'current' => $current,
+            'historical' => $stats,
+        ];
     }
 
     /**
@@ -174,30 +261,6 @@ class GuildController
             throw new RestException(400, "Missing guild ID");
         } else {
             return $this->api->guild()->detailsOf($id, API_KEY)->get();
-        }
-    }
-
-    /**
-     * Get guild memebrs
-     *
-     * @url GET /$id/members
-     * @noAuth
-     */
-    public function members($id)
-    {
-        if (empty($id)) {
-            throw new RestException(400, "Missing guild ID");
-        } else {
-            //Check if cached
-
-            //request new data
-            $guildMemebers = $this->api->guild()->membersOf(API_KEY, $id)->get();
-
-            //store in cache
-            //$this->cache->set("guild:{$id}:members", $guildMemebers);
-
-            return $guildMemebers;
-
         }
     }
 }
@@ -219,7 +282,57 @@ if (interface_exists('ICronTask')) {
             $this->api = $api;
 
             CronTask::Log("==Starting CronTask==");
+
+            //Build guild stats every day
+            if (date("H") == 0 && date("i") == 2) {
+                $this->getStats();
+            }
+
             $this->parseLogs();
+        }
+
+        /**
+         * Buid up guild stats
+         *
+         * @return void
+         */
+        private function getStats()
+        {
+            $gold = 0;
+            $allMembers = [];
+
+            CronTask::Log("=== Starting Stats ===");
+
+            foreach ($this->config['guilds'] as $guild) {
+
+                CronTask::Log("Getting Stats for {$guild['name']}");
+
+                // Load bank
+                $stash = $this->api->guild()->stashOf($guild['api_key'], $guild['guild_id'])->get();
+
+                // Loop bank tabs and add coins to $gold
+                foreach ($stash as $tab) {
+                    $gold = $gold + $tab->coins;
+                }
+
+                // Load members
+                $members = $this->api->guild()->membersOf($guild['api_key'], $guild['guild_id'])->get();
+
+                // Loop members
+                foreach ($members as $member) {
+                    $allMembers[] = $member->name;
+                }
+
+            }
+
+            // Store in `guild_stats` table
+            $data = [
+                'gold' => $gold,
+                'members' => count(array_unique($allMembers)),
+            ];
+
+            CronTask::Log("Saving to DB");
+            $this->db->insert('guild_stats', $data);
         }
 
         /**
@@ -230,19 +343,29 @@ if (interface_exists('ICronTask')) {
          */
         private function parseLogs()
         {
+            
+            // Fetch last ID's processed for all guilds
+            $profile_start = hrtime(true);
+            $last_ids = $this->getLastIds();
+            CronTask::Log("getLastIds took: ".(float)(hrtime(true) - $profile_start)/1e+9." seconds to run");
+
             foreach ($this->config['guilds'] as $guild) {
 
                 CronTask::Log("Getting logs for {$guild['name']}");
 
                 // Fetch last log ID
-                $last_id = $this->getLastId($guild);
+                $last_id = $last_ids[$guild['guild_id']] ?? 0;
                 // Fetch the logs from API
+                $profile_start = hrtime(true);
                 $log = $this->api->guild()->logOf($guild['api_key'], $guild['guild_id'])->since($last_id);
-
+                CronTask::Log("API call took: ".(float)(hrtime(true) - $profile_start)/1e+9." seconds to run");
                 // If log is empty, nothing new, move on
                 if (empty($log)) {
                     continue;
                 }
+
+                // Reverse log so we work on entries in the right order
+                $log = array_reverse($log);
 
                 foreach ($log as $entry) {
                     switch ($entry->type) {
@@ -294,6 +417,7 @@ if (interface_exists('ICronTask')) {
 
                 case 'invited':
                     $message = "{$entry->invited_by} invited {$entry->user}";
+                    //$this->addMember($entry->user, $guild['guild_id']);
                     break;
 
                 case 'kick':
@@ -304,6 +428,9 @@ if (interface_exists('ICronTask')) {
                         //User was kicked from the guild
                         $message = "{$entry->user} was kicked by {$entry->kicked_by}";
                     }
+
+                    //Remove from `guild`
+                    //$this->removeMember($entry->user, $guild['guild_id']);
                     break;
 
                 case 'rank_change':
@@ -408,29 +535,67 @@ if (interface_exists('ICronTask')) {
 
             $id = $this->db->insert('log', $data);
             if (!$id) {
+                CronTask::Log($this->db->getLastQuery());
+                CronTask::Log($this->db->getLastError());
                 CronTask::Log("Error Saving log entry: {$raw}");
             }
         }
 
         /**
-         * Get last log ID from the database
+         * Add a user to the `members` and `members_guild` tables
          *
-         * @since 1.0
+         * @param object $entry The GW2 log entry
+         * @param string $guild The Guild to add them to
          *
-         * @param array $guild
-         *
-         * @return int The last ID in the DB or 0 if nothing found
+         * @return void
          */
-        private function getLastId(array $guild): int
+        private function addMember(object $entry, string $guild): void
         {
-            $this->db->where('guild_id', $guild['guild_id']);
-            $last_id = $this->db->getValue('log', 'max(api_id)');
+            $data = [
+                'account' => $entry->user,
+            ];
+            $this->db->onDuplicate(['account'], 'id');
+            $this->db->insert('members', $data);
+            $id = $this->db->rawQueryValue("SELECT LAST_INSERT_ID() limit 1");
 
-            if (is_null($last_id)) {
-                $last_id = 0;
+            $member_guild = [
+                'account_id' => $id,
+                'guild_id' => $guild,
+                'guild_rank' => 'Almost Tiny',
+                'date_joined' => $this->db->func('STR_TO_DATE(?, ?)', [$entry->time, '%Y-%m-%dT%H:%i:%s.000Z']),
+            ];
+            $this->db->insert('members_guild', $member_guild);
+        }
+
+        /**
+         * Remove user from a guild
+         *
+         * @param object $enrty The GW2 log entry
+         * @param string $guild The Guild to remove them from
+         *
+         * @return void
+         */
+        private function removeMemebr(object $entry, string $guild): void
+        {
+            $this->db->rawQuery("CALL remove_member('NullValue.4956', '4EC8BEAF-B669-EB11-81AC-95DFE50946EB')");
+        }
+
+        /**
+         * Fetch and format the last IDs for all guilds
+         * 
+         * @return array
+         */
+        private function getLastIds(): array
+        {
+            $this->db->groupBy('guild_id');
+            $last_ids_raw = $this->db->get('log', null, ['max(api_id) as api_id', 'guild_id']);
+            $last_ids = [];
+
+            foreach ($last_ids_raw as $data ) {
+                $last_ids[$data['guild_id']] = $data['api_id'];
             }
 
-            return $last_id;
+            return $last_ids;
         }
     }
 }
