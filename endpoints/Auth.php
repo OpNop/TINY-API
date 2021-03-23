@@ -14,6 +14,15 @@ class AuthController
         3 => 'Tiny Leader',
     ];
 
+    private $cookie_options = [
+        'expires'   => 0,
+        'path'      => '/',
+        'domain'    => null,
+        'secure'    => true,
+        'httponly'  => true,
+        'samesite' => 'None'
+    ];
+
     public function __construct()
     {
         $this->cache = new Predis\Client();
@@ -59,7 +68,7 @@ class AuthController
 
         $payload = $this->make_payload(
             [
-                "name" => substr($user['account'], -5),
+                "name" => substr($user['account'], 0, -5),
                 "rank" => $this->rank[$user['access']],
             ]
         );
@@ -67,7 +76,7 @@ class AuthController
 
         $this->cache->setex("refresh_tokens:{$refresh}", 86400, serialize($payload));
 
-        setcookie("refresh_token", $refresh, 0, "/", "api.tinyarmy.org", true, true);
+        setcookie("refresh_token", $refresh, $this->cookie_options);
         return [
             'token' => JWT::encode($payload, $config['jwt_key']),
             'user' => substr($user['account'], 0, -5),
@@ -95,8 +104,11 @@ class AuthController
             $this->cache->del("refresh_tokens:{$_COOKIE['refresh_token']}");
             $this->cache->setex("refresh_tokens:{$refresh}", 86400, serialize($payload));
 
-            setcookie("refresh_token", $refresh, 0, "/", "api.tinyarmy.org", true, true);
-            return JWT::encode($payload, $config['jwt_key']);
+            setcookie("refresh_token", $refresh, $this->cookie_options);
+            return [
+                'token' => JWT::encode($payload, $config['jwt_key']),
+                'user' => $payload['data']['name'],
+            ];
         } else {
             throw new RestException(401);
         }
