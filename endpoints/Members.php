@@ -58,7 +58,7 @@ class MemberController
         }
 
         global $db;
-        
+
         $db->where("account", "{$account}%", 'like');
         return $db->get('members');
 
@@ -66,7 +66,7 @@ class MemberController
 
     /**
      * Get account information
-     *
+     * @noAuth
      * @url GET /$account
      */
     public function memberInfo($account = null)
@@ -79,7 +79,7 @@ class MemberController
 
         // Get basic Info
         $db->where('account', $account);
-        $user = $db->getOne('members', "account, created");
+        $user = $db->getOne('members', "account, discord, created, is_banned");
 
         if (!$user) {
             throw new RestException(404, "Account not found");
@@ -87,7 +87,14 @@ class MemberController
 
         // Get guilds of user
         $db->where('account', $account);
+        $db->orderBy('date_joined', 'ASC');
         $user['guilds'] = $db->get('v_members');
+
+        // If they are banned, pull the reason
+        if ($user['is_banned'] === 1) {
+            $db->where('account', $account);
+            $user['ban_reason'] = $db->getOne('ban_list', 'date_added, reason');
+        }
 
         return $user;
     }
