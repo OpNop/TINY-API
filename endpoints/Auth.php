@@ -45,7 +45,7 @@ class AuthController
         // Try and fetch the account
         try {
             $api_account = $api->account($data->token)->get();
-        } catch (AuthenticationException $exception) {
+        } catch ( \Exception $exception) {
             throw new RestException(401);
             die();
         }
