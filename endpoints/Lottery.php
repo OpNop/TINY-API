@@ -133,6 +133,26 @@ class LotteryController
         }
     }
 
+    /**
+     * Return entries for a specific account
+     * for use on https://tinyarmy.org/lottery/
+     * for now.
+     * 
+     * @url GET /listEntries/$account
+     * @noAuth
+     */
+    public function listEntriesOld(string $account)
+    {
+        global $db;
+
+        $db->where('user', $account);
+        $db->orderBy('time', 'desc');
+        $result = $db->get('lottery_entries', null, 'id as lottery_id, api_id as log_id, time, user, coins, guild_id as guild');
+        return $result;
+        //$result = $this->conn->query( "SELECT * FROM `{$this->config['db_table']}` WHERE `user`='{$account}' ORDER BY `time` DESC" )->fetch_all( MYSQLI_ASSOC );
+        
+    }
+
     private function _getLotteryPot()
     {
         //check if it is Wednesday
