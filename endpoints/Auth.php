@@ -66,15 +66,15 @@ class AuthController
             die();
         }
 
-        $payload = $this->make_payload(
-            [
-                "name" => substr($user['account'], 0, -5),
-                "rank" => $this->rank[$user['access']],
-            ]
-        );
+        $token_data = [
+            "name" => substr($user['account'], 0, -5),
+            "rank" => $this->rank[$user['access']],
+        ];
+
+        $payload = $this->make_payload($token_data);
         $refresh = $this->make_guid();
 
-        $this->cache->setex("refresh_tokens:{$refresh}", 86400, serialize($payload));
+        $this->cache->setex("refresh_tokens:{$refresh}", 86400, serialize($token_data));
 
         setcookie("refresh_token", $refresh, $this->cookie_options);
         return [
@@ -92,22 +92,25 @@ class AuthController
      */
     public function refresh_token()
     {
+        global $config;
+        
         if (empty($_COOKIE['refresh_token'])) {
             throw new RestException(400);
         }
 
         $result = $this->cache->get("refresh_tokens:{$_COOKIE['refresh_token']}");
         if ($result) {
-            $payload = unserialize($result);
+            $token_data = unserialize($result);
+            $payload = $this->make_payload($token_data);
             $refresh = $this->make_guid();
 
             $this->cache->del("refresh_tokens:{$_COOKIE['refresh_token']}");
-            $this->cache->setex("refresh_tokens:{$refresh}", 86400, serialize($payload));
+            $this->cache->setex("refresh_tokens:{$refresh}", 86400, serialize($token_data));
 
             setcookie("refresh_token", $refresh, $this->cookie_options);
             return [
                 'token' => JWT::encode($payload, $config['jwt_key']),
-                'user' => $payload['data']['name'],
+                'user' => $token_data['name'],
             ];
         } else {
             throw new RestException(401);
@@ -121,7 +124,7 @@ class AuthController
             "iss" => "https://api.tinyarmy.org/",
             "iat" => $time,
             "nbf" => $time - 10,
-            "exp" => $time + 86400,
+            "exp" => $time + 900,
             "data" => $data,
         ];
         return $payload;
