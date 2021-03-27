@@ -19,7 +19,8 @@ require_once "config.php";
 
 //Connect to MySql
 try {
-    $db = new MysqliDb($config['db']['host'], $config['db']['username'], $config['db']['password'], $config['db']['database']);
+    $db = new MysqliDb($config['db']);
+    //$db = new MysqliDb($config['db']['host'], $config['db']['username'], $config['db']['password'], $config['db']['database']);
 } catch (\Exception $e) {
     die($e->getMessage());
 }
