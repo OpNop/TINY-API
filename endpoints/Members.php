@@ -1,5 +1,6 @@
 <?php
 
+include 'classes/Discord.php';
 use \Jacwright\RestServer\RestException;
 
 class MemberController
@@ -65,8 +66,85 @@ class MemberController
     }
 
     /**
+     * Update Member data
+     *
+     * @url POST /update
+     */
+    public function updateMember($data)
+    {
+        if (empty($data) || empty($data->account)) {
+            throw new RestException(400, "An account is required");
+        }
+
+        global $db;
+
+        // $data = [
+        //     'account' => 'NullValue.1234',
+        //     'fields' => [
+        //         'field_name' => 'value'
+        //     ]
+        // ];
+        //error_log("Processing: " . print_r($data->fields->discord, true));
+
+        //Try and fetch User Data
+        if (property_exists($data->fields, 'discord')) {
+            if (empty($data->fields->discord)) {
+                //error_log("Deleating data for User: {$data->account}");
+                //Delete entries
+                $db->where('account', $data->account);
+                $db->delete('members_discord');
+
+            } else {
+                //error_log("Saving data for User: {$data->account}");
+                $apidata = Discord::GetUserData($data->fields->discord);
+                //API error
+                if ($apidata['info']['http_code'] != 200) {
+                    throw new RestException(500, $apidata['data']['message']);
+                } else {
+                    //error_log("Discord Data: " . print_r($apidata['data'], true));
+                    $dbData = [
+                        'account' => $data->account,
+                        'id' => $apidata['data']['id'],
+                        'username' => $apidata['data']['username'],
+                        'discriminator' => $apidata['data']['discriminator'],
+                        'avatar' => $apidata['data']['avatar'],
+                    ];
+                    $db->onDuplicate($dbData);
+                    $db->insert('members_discord', $dbData);
+                }
+            }
+        }
+
+        $db->where('account', $data->account);
+        if ($db->update('members', (array) $data->fields)) {
+            return true;
+        } else {
+            throw new RestException(500, 'Update failed: ' . $db->getLastError());
+        }
+    }
+
+    /**
+     * Get discord info
+     *
+     * @url GET /$account/discord
+     */
+    public function getDiscord($account)
+    {
+        global $db;
+        // Get Discord info
+        $db->where('account', $account);
+        $data = $db->getOne('members_discord');
+
+        if ($data) {
+            return $data;
+        } else {
+            return [];
+        }
+    }
+
+    /**
      * Get account information
-     * @noAuth
+     *
      * @url GET /$account
      */
     public function memberInfo($account = null)
