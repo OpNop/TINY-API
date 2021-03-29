@@ -15,6 +15,12 @@ class AuthServer implements \Jacwright\RestServer\AuthServer
             return false;
         }
 
+        //Try for Discord bot token
+        if ($auth == $config['bot_key']) {
+            return true;
+        }
+
+        //Try for JWT Token
         try {
             $token = JWT::decode($auth, $config['jwt_key'], array('HS256'));
         } catch (Firebase\JWT\ExpiredException $ex) {
