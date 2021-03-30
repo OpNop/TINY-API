@@ -66,6 +66,52 @@ class MemberController
     }
 
     /**
+     * Add API key to a member
+     *
+     * @url POST /$account/key
+     */
+    public function setKey($account, $data)
+    {
+        if (empty($account) || empty($data->key)) {
+            throw new RestException(400, "A GW2 Account and API key are required");
+        }
+
+        //make sure key is proper, this whould already
+        //have been done by the discord bot, but meh?
+        if (!preg_match('/([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{20}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})/', $data->key)) {
+            throw new RestException(403, "Invalid API key");
+        }
+
+        global $db, $api;
+
+        $db->where('account', $account);
+        if ($db->update('members', ['api_key' => $data->key])) {
+            //Load Character info
+            $characters = $api->characters($data->key)->all();
+            $characterData = [];
+
+            foreach ($characters as $character) {
+                $characterData[] = [
+                    "account" => $account,
+                    "name" => $character->name,
+                    "race" => $character->race,
+                    "created" => $db->func('STR_TO_DATE(?, ?)', [$character->created, '%Y-%m-%dT%H:%i:00Z']),
+                ];
+            }
+            //error_log(print_r($characterData, true));
+
+            $ids = $db->insertMulti('members_character', $characterData);
+            if (!$ids) {
+                return 'insert failed: ' . $db->getLastError();
+            }
+            return true;
+
+        } else {
+            throw new RestException(500, "Error saving API key");
+        }
+    }
+
+    /**
      * Update Member data
      *
      * @url POST /update
@@ -139,6 +185,45 @@ class MemberController
             return $data;
         } else {
             return [];
+        }
+    }
+
+    /** Save discord info
+     *
+     * @url POST /$account/discord
+     */
+    public function setDiscord($account, $data)
+    {
+        if (empty($account) || empty($data)) {
+            throw new RestException(400, "A GW2 Account and Discord Account are required");
+        }
+
+        global $db;
+
+        if (empty($data->discord)) {
+            //error_log("Deleating data for User: {$data->account}");
+            //Delete entries
+            $db->where('account', $data->account);
+            $db->delete('members_discord');
+
+        } else {
+            //error_log("Saving data for User: {$data->account}");
+            $apidata = Discord::GetUserData($data->discord);
+            //API error
+            if ($apidata['info']['http_code'] != 200) {
+                throw new RestException(500, $apidata['data']['message']);
+            } else {
+                //error_log("Discord Data: " . print_r($apidata['data'], true));
+                $dbData = [
+                    'account' => $account,
+                    'id' => $apidata['data']['id'],
+                    'username' => $apidata['data']['username'],
+                    'discriminator' => $apidata['data']['discriminator'],
+                    'avatar' => $apidata['data']['avatar'],
+                ];
+                $db->onDuplicate($dbData);
+                $db->insert('members_discord', $dbData);
+            }
         }
     }
 
