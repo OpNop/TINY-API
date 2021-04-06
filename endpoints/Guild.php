@@ -176,6 +176,9 @@ class GuildController
             throw new RestException(400, "Argument `orderBy` must be one of (" . implode(', ', $valid_sort_by) . ")");
         }
 
+        //switch to internal sort order if sorting by rank
+        if($sort_by == 'guild_rank') $sort_by = 'rank_order';
+
         $this->db->pageLimit = $limit;
         $this->db->orderBy($sort_by, $order_by);
 
