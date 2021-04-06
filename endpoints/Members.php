@@ -1,6 +1,6 @@
 <?php
 
-include 'classes/Discord.php';
+include '/var/www/api.tinyarmy.org/htdocs/classes/Discord.php';
 use \Jacwright\RestServer\RestException;
 
 class MemberController
@@ -260,5 +260,46 @@ class MemberController
         }
 
         return $user;
+    }
+}
+
+if (interface_exists('ICronTask')) {
+    class MemberCron implements ICronTask
+    {
+        public function run($config, $db, $cache, $gw2api)
+        {
+            CronTask::Log("== Starting Members CronTask ==");
+            //Update discord avatar
+            $db->where('last_update < DATE_SUB(NOW(), INTERVAL 24 HOUR)');
+            $db->orderBy('last_update', 'ASC');
+            $user = $db->getOne('members_discord');
+            if(!$user){
+                return;
+            }
+
+            //make call to Discord
+            CronTask::Log("Checking info on {$user['account']}");
+            $apidata = Discord::GetUserData($user['id']);
+            //API error
+            if ($apidata['info']['http_code'] != 200) {
+                //throw new RestException(500, $apidata['data']['message']);
+                CronTask::Log("Error fetching Discord data for {$user['account']}");
+            } else {
+                CronTask::Log("Updating Discord data for {$user['account']}");
+                //error_log("Discord Data: " . print_r($apidata['data'], true));
+                $dbData = [
+                    'id' => $apidata['data']['id'],
+                    'username' => $apidata['data']['username'],
+                    'discriminator' => $apidata['data']['discriminator'],
+                    'avatar' => $apidata['data']['avatar'],
+                    'last_update' => $db->now(),
+                ];
+                //$db->onDuplicate($dbData);
+                $db->where('account', $user['account']);
+                if(!$db->update('members_discord', $dbData)) {
+                    CronTask::Log("Error Updating {$user['account']}: {$db->getLastError()}");
+                }
+            }
+        }
     }
 }
