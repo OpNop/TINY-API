@@ -23,7 +23,7 @@ class AuthServer implements \Jacwright\RestServer\AuthServer
         //Try for JWT Token
         try {
             $token = JWT::decode($auth, $config['jwt_key'], array('HS256'));
-        } catch (Firebase\JWT\ExpiredException $ex) {
+        } catch (\Exception $e) {
             return false;
         }
         return true;
