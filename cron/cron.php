@@ -39,7 +39,8 @@ class CronTask
         $this->config = $config;
 
         //Connect to MySQL
-        $this->db = new MysqliDb($config['db']['host'], $config['db']['username'], $config['db']['password'], $config['db']['database']);
+        //$this->db = new MysqliDb($config['db']['host'], $config['db']['username'], $config['db']['password'], $config['db']['database']);
+        $this->db = new MysqliDb($config['db']);
 
         //Connect to Redis
         $this->cache = new Predis\Client();
