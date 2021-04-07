@@ -74,7 +74,7 @@ class GuildController
 
         $this->db->pageLimit = $limit;
         $this->db->orderBy('date', 'Desc');
-        $log = $this->db->arraybuilder()->withTotalCount()->paginate('log', $page);
+        $log = $this->db->arraybuilder()->withTotalCount()->paginate('v_guild_logs', $page);
         if ($this->db->getLastErrno() === 0) {
             header("X-Page-Size: {$limit}");
             header("X-Result-Count: {$this->db->count}");
