@@ -5,6 +5,7 @@ use \Jacwright\RestServer\RestException;
 
 class AuthServer implements \Jacwright\RestServer\AuthServer
 {
+    public $token;
 
     public function isAuthenticated($classObj)
     {
@@ -23,6 +24,7 @@ class AuthServer implements \Jacwright\RestServer\AuthServer
         //Try for JWT Token
         try {
             $token = JWT::decode($auth, $config['jwt_key'], array('HS256'));
+            $this->token = $token;
         } catch (\Exception $e) {
             return false;
         }

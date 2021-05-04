@@ -67,6 +67,7 @@ class AuthController
         }
 
         $token_data = [
+            "account" => $user['account'],
             "name" => substr($user['account'], 0, -5),
             "rank" => $this->rank[$user['access']],
         ];
