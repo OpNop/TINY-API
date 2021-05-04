@@ -18,12 +18,12 @@ class MemberController
     public function test()
     {
         global $db, $config, $api;
-        unset($config['db']);
+
         return [
             'message' => '(Member) Hello Tiny!',
-            'config' => $config,
             'dbVersion' => $db->rawQueryValue('SELECT VERSION() LIMIT 1'),
             'gw2Version' => $api->build()->get(),
+            'server' => $this->server->authHandler->token
         ];
     }
 
@@ -188,7 +188,8 @@ class MemberController
         }
     }
 
-    /** Save discord info
+    /**
+     * Save discord info
      *
      * @url POST /$account/discord
      */
@@ -225,6 +226,49 @@ class MemberController
                 $db->insert('members_discord', $dbData);
             }
         }
+    }
+
+    /**
+     * Load user notes
+     *
+     * @url GET /$account/notes
+     */
+    public function getNotes($account)
+    {
+        global $db;
+
+        $db->where('account', $account);
+        $notes = $db->get('v_member_notes');
+        
+        if ($db->count > 0) {
+            return $notes;
+        } else {
+            return [];
+        }
+
+    }
+
+    /**
+     * Add note to user
+     *
+     * @url POST /$account/notes
+     */
+    public function addNote($account, $data)
+    {
+        if(!$this->server->authHandler->token->data->account){
+            throw new RestException(400, "Old auth token format, please log out and try again");
+        }
+
+        global $db;
+
+        $data = [
+            'account' => $account,
+            'creator' => $this->server->authHandler->token->data->account,
+            'message' => $data->message
+        ];
+
+        $db->insert('members_note', $data);
+        return $this->getNotes($account);
     }
 
     /**
@@ -273,7 +317,7 @@ if (interface_exists('ICronTask')) {
             $db->where('last_update < DATE_SUB(NOW(), INTERVAL 24 HOUR)');
             $db->orderBy('last_update', 'ASC');
             $user = $db->getOne('members_discord');
-            if(!$user){
+            if (!$user) {
                 return;
             }
 
@@ -296,7 +340,7 @@ if (interface_exists('ICronTask')) {
                 ];
                 //$db->onDuplicate($dbData);
                 $db->where('account', $user['account']);
-                if(!$db->update('members_discord', $dbData)) {
+                if (!$db->update('members_discord', $dbData)) {
                     CronTask::Log("Error Updating {$user['account']}: {$db->getLastError()}");
                 }
             }
