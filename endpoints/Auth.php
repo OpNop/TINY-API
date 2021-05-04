@@ -125,7 +125,7 @@ class AuthController
             "iss" => "https://api.tinyarmy.org/",
             "iat" => $time,
             "nbf" => $time - 10,
-            "exp" => $time + 900,
+            "exp" => $time + 3600,
             "data" => $data,
         ];
         return $payload;
