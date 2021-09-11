@@ -303,6 +303,11 @@ class MemberController
             $user['ban_reason'] = $db->getOne('ban_list', 'date_added, reason');
         }
 
+        // Load characters
+        $db->where('account', $account);
+        $db->orderBy('name', 'ASC');
+        $user['characters'] = $db->get('members_character');
+
         return $user;
     }
 }
