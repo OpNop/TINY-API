@@ -237,7 +237,7 @@ class GuildController
         $current = $stats[0];
         return [
             'current' => $current,
-            'historical' => $stats,
+            'historical' => array_reverse($stats),
         ];
     }
 
