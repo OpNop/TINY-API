@@ -452,7 +452,8 @@ if (interface_exists('ICronTask')) {
         {
             // Get item name fom API
             $item = $this->api->items()->get($entry->item_id);
-            $this->addLogEvent("{$entry->user} deposited {$entry->count} {$item->name}", $entry, $guild);
+            $entry->item_name = $item->name;
+            $this->addLogEvent("{$entry->user} deposited {$entry->count} {$entry->item_name}", $entry, $guild);
         }
 
         /**
@@ -475,7 +476,8 @@ if (interface_exists('ICronTask')) {
                         $message = "{$entry->user} deposited {$entry->coins}";
                     } else {
                         $item = $this->api->items()->get($entry->item_id);
-                        $message = "{$entry->user} deposited {$entry->count} {$item->name}";
+                        $entry->item_name = $item->name;
+                        $message = "{$entry->user} deposited {$entry->count} {$entry->item_name}";
                     }
                     break;
 
@@ -484,13 +486,15 @@ if (interface_exists('ICronTask')) {
                         $message = "{$entry->user} withdrew {$entry->coins}";
                     } else {
                         $item = $this->api->items()->get($entry->item_id);
-                        $message = "{$entry->user} withdrew {$entry->count} {$item->name}";
+                        $entry->item_name = $item->name;
+                        $message = "{$entry->user} withdrew {$entry->count} {$entry->item_name}";
                     }
                     break;
 
                 case 'move':
                     $item = $this->api->items()->get($entry->item_id);
-                    $message = "{$entry->user} moved {$entry->count} {$item->name} somewhere ¯\_(ツ)_/¯";
+                    $entry->item_name = $item->name;
+                    $message = "{$entry->user} moved {$entry->count} {$entry->item_name} somewhere ¯\_(ツ)_/¯";
                     break;
 
                 default:
