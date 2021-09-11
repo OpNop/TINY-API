@@ -50,6 +50,7 @@ class GuildController
         $page = (int) ($_GET['page'] ?? 1);
         $limit = (int) ($_GET['limit'] ?? 20);
         $account = $_GET['account'] ?? null;
+        $v2 = isset($_GET['v2']) ?? false;
 
         $valid_types = ['stash', 'rank_change', 'kick', 'joined', 'invited'];
 
@@ -74,7 +75,18 @@ class GuildController
 
         $this->db->pageLimit = $limit;
         $this->db->orderBy('date', 'Desc');
-        $log = $this->db->arraybuilder()->withTotalCount()->paginate('v_guild_logs', $page);
+        if($v2){
+            $log = $this->db->arraybuilder()->withTotalCount()->paginate('v_guild_logs', $page);
+            $convert2Json = function($data){
+                $data['raw'] = json_decode($data['raw'], true);
+                return $data;
+            };
+            $log = array_map($convert2Json, $log);
+
+        } else {
+            $log = $this->db->arraybuilder()->withTotalCount()->paginate('v_guild_logs', $page);
+        }
+        
         if ($this->db->getLastErrno() === 0) {
             header("X-Page-Size: {$limit}");
             header("X-Result-Count: {$this->db->count}");
