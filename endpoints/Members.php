@@ -231,14 +231,22 @@ class MemberController
     /**
      * Load user notes
      *
+     * @url GET /notes
      * @url GET /$account/notes
      */
-    public function getNotes($account)
+    public function getNotes($account = null)
     {
         global $db;
 
-        $db->where('account', $account);
-        $notes = $db->get('v_member_notes');
+        $limit = $_GET['limit'] ?? null;
+
+        if( !is_null($account) ){
+            $db->where('account', $account);
+        }
+
+        $db->orderBy('date_created', 'desc');
+
+        $notes = $db->get('v_member_notes', $limit);
         
         if ($db->count > 0) {
             return $notes;
