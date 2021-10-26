@@ -232,8 +232,9 @@ class GuildController
      */
     public function guildStats()
     {
+        $limit = (int) ($_GET['limit'] ?? 15);
         $this->db->orderBy('time', 'DESC');
-        $stats = $this->db->get('guild_stats', 15);
+        $stats = $this->db->get('guild_stats', $limit);
         $current = $stats[0];
         return [
             'current' => $current,
