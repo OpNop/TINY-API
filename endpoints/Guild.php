@@ -110,11 +110,10 @@ class GuildController
      * Sync guild members
      *
      * @url GET /syncMembers
-     * @noAuth
      */
     public function syncMembers()
     {
-        if (!isset($_GET['pass']) || $_GET['pass'] != "ThisisthePassWord235") {
+        if (!isset($_GET['pass']) || $_GET['pass'] != "ThisisthePassWord2356") {
             return "No!";
         }
         global $config;
