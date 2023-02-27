@@ -1,9 +1,9 @@
 <?php
 
-include '/var/www/api.tinyarmy.org/htdocs/classes/Discord.php';
+include_once '/var/www/api.tinyarmy.org/htdocs/classes/Discord.php';
 use \Jacwright\RestServer\RestException;
 
-class MemberController
+class MemberController_V1
 {
     public function __construct()
     {

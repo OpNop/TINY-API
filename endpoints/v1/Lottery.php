@@ -1,6 +1,6 @@
 <?php
 
-class LotteryController
+class LotteryController_V1
 {
     /**
      * GW2 API client

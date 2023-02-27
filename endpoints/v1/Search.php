@@ -1,6 +1,6 @@
 <?php
 
-class SearchController
+class SearchController_V1
 {
     public function __construct()
     {

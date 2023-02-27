@@ -11,7 +11,7 @@ date_default_timezone_set('UTC');
 require_once '../vendor/autoload.php';
 
 //Require all endpoints
-foreach(glob("../endpoints/*.php") as $endpoint){
+foreach(glob("../endpoints/v1/*.php") as $endpoint){
     require_once $endpoint;
 }
 
@@ -78,7 +78,7 @@ class CronTask
     private function _findCronTasks() : ?array
     {
         if (interface_exists("ICronTask")) {
-            return array_filter(get_declared_classes(), create_function('$className', "return in_array(\"ICronTask\", class_implements(\"\$className\"));"));
+            return array_filter(get_declared_classes(), function($className) { return in_array("ICronTask", class_implements("$className"));});
         }
         else {
             return null;

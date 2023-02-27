@@ -3,7 +3,7 @@
 use \Firebase\JWT\JWT;
 use \Jacwright\RestServer\RestException;
 
-class AuthController
+class AuthController_V2
 {
     private $cache;
 

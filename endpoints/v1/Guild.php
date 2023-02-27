@@ -2,7 +2,7 @@
 
 use \Jacwright\RestServer\RestException;
 
-class GuildController
+class GuildController_V1
 {
 
     //Reference to the GW2 API
