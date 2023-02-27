@@ -280,6 +280,28 @@ class MemberController
     }
 
     /**
+     * Get user karma log
+     * 
+     * @url GET /$account/karma
+     * @noAuth
+     */
+    public function getKarma($account)
+    {
+        global $db;
+
+        $limit = $_GET['limit'] ?? null;
+
+        $db->where('account', $account);
+        $karma = $db->get('member_karma', $limit);
+
+        if( $db->count > 0) {
+            return $karma;
+        } else {
+            return [];
+        }
+    }
+
+    /**
      * Get account information
      *
      * @url GET /$account
@@ -315,6 +337,11 @@ class MemberController
         $db->where('account', $account);
         $db->orderBy('name', 'ASC');
         $user['characters'] = $db->get('members_character');
+
+        // Load karma
+        $db->where('account', $account);
+        $karma = $db->getValue('member_karma', 'sum(karma)');
+        $user['karma'] = $karma ?? 0;
 
         return $user;
     }
