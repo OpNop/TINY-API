@@ -1,13 +1,13 @@
 <?php
 
 include_once '/var/www/api.tinyarmy.org/htdocs/classes/Discord.php';
+
 use \Jacwright\RestServer\RestException;
 
 class MemberController_V1
 {
     public function __construct()
     {
-
     }
 
     /**
@@ -62,7 +62,6 @@ class MemberController_V1
 
         $db->where("account", "{$account}%", 'like');
         return $db->get('members');
-
     }
 
     /**
@@ -86,28 +85,31 @@ class MemberController_V1
 
         $db->where('account', $account);
         if ($db->update('members', ['api_key' => $data->key])) {
-            //Load Character info
-            $characters = $api->characters($data->key)->all();
-            $characterData = [];
-
-            foreach ($characters as $character) {
-                $characterData[] = [
-                    "account" => $account,
-                    "name" => $character->name,
-                    "race" => $character->race,
-                    "created" => $db->func('STR_TO_DATE(?, ?)', [$character->created, '%Y-%m-%dT%H:%i:00Z']),
-                ];
-            }
-            //error_log(print_r($characterData, true));
-
-            $ids = $db->insertMulti('members_character', $characterData);
-            if (!$ids) {
-                return 'insert failed: ' . $db->getLastError();
-            }
-            return true;
-
+            return $this->loadCharacters($account, $data->key);
         } else {
             throw new RestException(500, "Error saving API key");
+        }
+    }
+
+    /**
+     * Update users characters
+     * 
+     * @url GET /$account/characters/refresh
+     */
+    public function refreshCharacters(string $account)
+    {
+        //fetch users API key
+        global $db;
+        $db->where('account', $account);
+        $data = $db->getOne('members', 'api_key');
+
+        if (!$data) {
+            return [];
+        }
+
+        if ($this->loadCharacters($account, $data['api_key'])) {
+            $db->where('account', $account);
+            return $db->get('members_character');
         }
     }
 
@@ -139,7 +141,6 @@ class MemberController_V1
                 //Delete entries
                 $db->where('account', $data->account);
                 $db->delete('members_discord');
-
             } else {
                 //error_log("Saving data for User: {$data->account}");
                 $apidata = Discord::GetUserData($data->fields->discord);
@@ -206,7 +207,6 @@ class MemberController_V1
             //Delete entries
             $db->where('account', $data->account);
             $db->delete('members_discord');
-
         } else {
             //error_log("Saving data for User: {$data->account}");
             $apidata = Discord::GetUserData($data->discord);
@@ -240,20 +240,19 @@ class MemberController_V1
 
         $limit = $_GET['limit'] ?? null;
 
-        if( !is_null($account) ){
+        if (!is_null($account)) {
             $db->where('account', $account);
         }
 
         $db->orderBy('date_created', 'desc');
 
         $notes = $db->get('v_member_notes', $limit);
-        
+
         if ($db->count > 0) {
             return $notes;
         } else {
             return [];
         }
-
     }
 
     /**
@@ -263,7 +262,7 @@ class MemberController_V1
      */
     public function addNote($account, $data)
     {
-        if(!$this->server->authHandler->token->data->account){
+        if (!$this->server->authHandler->token->data->account) {
             throw new RestException(400, "Old auth token format, please log out and try again");
         }
 
@@ -294,7 +293,7 @@ class MemberController_V1
         $db->where('account', $account);
         $karma = $db->get('member_karma', $limit);
 
-        if( $db->count > 0) {
+        if ($db->count > 0) {
             return $karma;
         } else {
             return [];
@@ -344,6 +343,35 @@ class MemberController_V1
         $user['karma'] = $karma ?? 0;
 
         return $user;
+    }
+
+    private function loadCharacters($account, $key)
+    {
+        error_log("Loading characters for {$account} with {$key}");
+        global $api, $db;
+        //Load Character info
+        $characters = $api->characters($key)->all();
+        $characterData = [];
+
+        foreach ($characters as $character) {
+            $characterData[] = [
+                "account" => $account,
+                "name" => $character->name,
+                "race" => $character->race,
+                "created" => $db->func('STR_TO_DATE(?, ?)', [$character->created, '%Y-%m-%dT%H:%i:00Z']),
+            ];
+        }
+
+        //Delete old characters if any
+        $db->where('account', $account);
+        $db->delete('members_character');
+
+        //Insert new characters
+        $ids = $db->insertMulti('members_character', $characterData);
+        if (!$ids) {
+            return 'insert failed: ' . $db->getLastError();
+        }
+        return true;
     }
 }
 
