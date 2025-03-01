@@ -9,9 +9,9 @@ class AuthController_V2
 
     private $rank = [
         0 => 'Member',
-        1 => 'Tiny Officer',
-        2 => 'Tiny General',
-        3 => 'Tiny Leader',
+        1 => 'Officer',
+        2 => 'General',
+        3 => 'Leader',
     ];
 
     private $cookie_options = [
@@ -79,8 +79,19 @@ class AuthController_V2
 
         setcookie("refresh_token", $refresh, $this->cookie_options);
         return [
-            'token' => JWT::encode($payload, $config['jwt_key']),
-            'user' => substr($user['account'], 0, -5),
+            'userData' => [
+                'account' => $user['account'],
+                'name' => substr($user['account'], 0, -5),
+                'avatar' => $this->getAvatar($user),
+                'role' => $this->rank[$user['access']]
+            ],
+            'accessToken' => JWT::encode($payload, $config['jwt_key']),
+            'userAbilities' => [
+                new class {
+                    public $action = "manage";
+                    public $subject = "all";
+                }
+            ]
         ];
 
     }
@@ -110,8 +121,8 @@ class AuthController_V2
 
             setcookie("refresh_token", $refresh, $this->cookie_options);
             return [
-                'token' => JWT::encode($payload, $config['jwt_key']),
-                'user' => $token_data['name'],
+                'accessToken' => JWT::encode($payload, $config['jwt_key']),
+                // 'user' => $token_data['name'],
             ];
         } else {
             throw new RestException(401);
@@ -137,5 +148,21 @@ class AuthController_V2
         $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // Set version to 0100
         $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // Set bits 6-7 to 10
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
+
+    private function getAvatar(array $user)
+    {
+        //Check for discord info
+        global $db;
+        $db->where('account', $user['account']);
+        $data = $db->getOne('members_discord');
+
+        if($data){
+            // Build avatar link
+            return "https://cdn.discordapp.com/avatars/{$data['id']}/{$data['avatar']}?size=64";
+        } else {
+            // Use generated image
+            return "https://api.dicebear.com/5.x/thumbs/svg?seed={$user['account']}";
+        }
     }
 }
