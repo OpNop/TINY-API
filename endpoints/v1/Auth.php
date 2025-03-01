@@ -36,6 +36,8 @@ class AuthController_V1
      */
     public function login($data)
     {
+        $useOffline = false;
+
         if (empty($data) || empty($data->token)) {
             throw new RestException(400);
         }
@@ -46,12 +48,20 @@ class AuthController_V1
         try {
             $api_account = $api->account($data->token)->get();
         } catch ( \Exception $exception) {
-            throw new RestException(401);
-            die();
+            if(503 == $exception->getResponse()->getStatusCode()){
+                $useOffline = true;
+            } else {
+                throw new RestException(401);
+                die();
+            }
         }
 
         // Check if the account has access
-        $db->where('account', $api_account->name);
+        if($useOffline){
+            $db->where('api_key', $data->token);
+        } else {
+            $db->where('account', $api_account->name);
+        }
         $user = $db->withTotalCount()->getOne('members');
 
         // No Account found
