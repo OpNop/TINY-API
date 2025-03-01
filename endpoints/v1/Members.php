@@ -36,12 +36,24 @@ class MemberController_V1
     {
         global $db;
 
-        $db->orderBy('account', 'ASC');
-        $list = $db->get('ban_list');
-        if ($list) {
-            return $list;
+        $account = $_GET['account'] ?? '';
+        if ($account) {
+            $db->where('account', $account);
+            $banned = $db->get('ban_list');
+            if ($banned) {
+                return $banned;
+            } else {
+                return [];
+            }
         } else {
-            return [];
+
+            $db->orderBy('account', 'ASC');
+            $list = $db->get('ban_list');
+            if ($list) {
+                return $list;
+            } else {
+                return [];
+            }
         }
     }
 
