@@ -354,6 +354,11 @@ class MemberController_V1
         $karma = $db->getValue('member_karma', 'sum(karma)');
         $user['karma'] = $karma ?? 0;
 
+        // Load Gold Donations
+        $db->where('user', $account);
+        $totalGold = $db->getValue('lottery_entries', 'sum(coins)');
+        $user['totalGold'] = (int)$totalGold ?? 0;
+
         return $user;
     }
 
