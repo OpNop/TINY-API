@@ -73,6 +73,8 @@ class CronTask
         } else {
             echo "No tasks found";
         }
+
+        $this->rotate_logs();
     }
 
     private function _findCronTasks() : ?array
@@ -99,6 +101,28 @@ class CronTask
             if( isset( $_GET['output'] ) ){
                 echo( "{$now} - <strong>{$trace[1]['class']}::{$trace[1]['function']}:</strong> {$message}<br>" );
             }
+        }
+    }
+
+    private function rotate_logs()
+    {
+        $maxlines = 300;
+        $file = new SplFileObject('log.log', 'r');
+        $file->seek(PHP_INT_MAX); // jump to end of file
+        $totalLines = $file->key() + 1;
+
+        if ($totalLines > $maxlines) {
+            // Rewind to the starting line we want to keep
+            $startLine = $totalLines - $maxlines;
+            $file->seek($startLine);
+
+            $output = '';
+            while (!$file->eof()) {
+                $output .= $file->fgets();
+            }
+
+            // Overwrite the file with the trimmed lines
+            file_put_contents('log.log', $output);
         }
     }
 }
