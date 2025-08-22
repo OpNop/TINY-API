@@ -2,10 +2,15 @@
 
 class LotteryController_V1
 {
+
+    private $db;
+
     /**
      * GW2 API client
      */
     private $api;
+
+    private $cache;
 
     public function __construct()
     {
@@ -214,7 +219,7 @@ if (interface_exists('ICronTask')) {
     class LotteryCron implements ICronTask
     {
 
-        public function run($config, $db, $cache, $gw2api)
+        public function run($config, MysqliDb $db, $cache, $gw2api)
         {
             CronTask::Log("==Starting CronTask==");
             foreach ($config['guilds'] as $guild) {

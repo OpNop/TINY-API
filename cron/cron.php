@@ -129,7 +129,7 @@ class CronTask
 
 interface ICronTask
 {
-    public function run ( $config, $db, $cache, $gw2api );
+    public function run ( $config, MysqliDb $db, $cache, $gw2api );
 }
 
 new CronTask();
