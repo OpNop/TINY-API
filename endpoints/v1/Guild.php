@@ -380,6 +380,10 @@ if (interface_exists('ICronTask')) {
                             //not dealing with this for now as its broken in my mind
                             break;
 
+                        case 'mission':
+                            $this->addMissionEvent($entry, $guild);
+                            break;
+
                         default:
                             CronTask::Log("Unknown entry type: {$entry->type}");
                     }
@@ -504,6 +508,42 @@ if (interface_exists('ICronTask')) {
             }
 
             $this->addLogEvent($message, $entry, $guild);
+        }
+
+        /**
+         * Adds the __Mission__ log events and saves them to the database
+         * 
+         * @param object $entry The raw API entry
+         * @param array $guild The guild array from $config
+         * 
+         * @return void
+         *
+         */
+        private function addMissionEvent(object $entry, array $guild): void
+        {
+            switch ($entry->state) {
+                case 'start':
+                    $message = "{$entry->user} Started a guild mission";
+                    break;
+                
+                case 'fail':
+                    $entry->user = "API.System";
+                    $message = "Guild mission failed";
+                    break;
+
+                case 'success':
+                    $entry->user = "API.System";
+                    $message = "Guild mission completed";
+                    break;
+                
+                default:
+                    $entry->user = "API.System";
+                    CronTask::Log("UNKNOWN mission state: {$entry->state}");
+                    break;
+            }
+
+            $this->addLogEvent($message, $entry, $guild); 
+
         }
 
         /**
