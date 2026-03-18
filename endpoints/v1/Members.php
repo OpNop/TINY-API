@@ -323,6 +323,22 @@ class MemberController_V1
             throw new RestException(400, "An account is required");
         }
 
+        //Handle API.System "member"
+        if($account === 'API.System') {
+            $user = [
+                'account' => 'API.System',
+                'discord' => '',
+                'created' => '2018-05-08 05:22:38',
+                'is_banned' => 0,
+                'karma' => '1,000,000',
+                'totalGold' => 0,
+                'guilds' => [],
+                'characters' => [],
+            ];
+
+            return $user;
+        }
+
         global $db;
 
         // Get basic Info
